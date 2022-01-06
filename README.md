@@ -1,6 +1,4 @@
-TODO: Review this README and add or modify as necessary.
-
-## DynProvider provider for octoDNS
+## [DEPRECATED] DynProvider provider for octoDNS
 
 An [octoDNS](https://github.com/octodns/octodns/) provider that targets [Dyn](https://www.oracle.com/corporate/acquisitions/dyn/technologies/migrate-your-services/).
 
@@ -38,21 +36,29 @@ octodns_dyn==0.0.1
 providers:
   dyn:
     class: octodns_dyn.DynProvider
-    # TODO
+    # Your dynect customer name (required)
+    customer: env/DYN_CUSTOMER
+    # Your dynect username (required)
+    username: env/DYN_USERNAME
+    # Your dynect password (required)
+    password: env/DYN_PASSWORD
+    # Whether or not to support TrafficDirectors and enable GeoDNS
+    # (optional, default is false)
+    #traffic_directors_enabled: true
 ```
+
+Note: due to the way dyn.tm.session.DynectSession is managing things we can only really have a single DynProvider configured. When you create a DynectSession it's stored in a thread-local singleton. You don't invoke methods on this session or a client that holds on to it. The client libraries grab their per-thread session by accessing the singleton through DynectSession.get_session(). That fundamentally doesn't support having more than one account active at a time. See DynProvider._check_dyn_sess for some related bits.
 
 ### Support Information
 
 #### Records
 
-TODO: All octoDNS record types are supported.
+All octoDNS record types are supported.
 
 #### Dynamic
 
-TODO: DynProvider does not support dynamic records.
+DynProvider does not support dynamic records.
 
 ### Developement
 
 See the [/script/](/script/) directory for some tools to help with the development process. They generally follow the [Script to rule them all](https://github.com/github/scripts-to-rule-them-all) pattern. Most useful is `./script/bootstrap` which will create a venv and install both the runtime and development related requirements. It will also hook up a pre-commit hook that covers most of what's run by CI.
-
-TODO: any provider specific setup, a docker compose to run things locally etc?

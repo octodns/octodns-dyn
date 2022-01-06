@@ -27,12 +27,11 @@ setup(
     name='octodns-dyn',
     packages=('octodns_dyn',),
     python_requires='>=3.6',
-    install_requires=('octodns>=0.9.14', 'TODO: other requirements'),
+    install_requires=('octodns>=0.9.14', 'dyn==1.8.1'),
     url='https://github.com/octodns/octodns-dyn',
     version=version(),
     tests_require=(
         'nose',
         'nose-no-network',
-        'TODO: other test-time requirements'
     ),
 )
