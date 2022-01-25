@@ -376,7 +376,8 @@ class DynProvider(BaseProvider):
                 try:
                     fqdn, _type = td.label.split(':', 1)
                 except ValueError:
-                    self.log.warn("Unsupported TrafficDirector '%s'", td.label)
+                    self.log.warning("Unsupported TrafficDirector '%s'",
+                                     td.label)
                     continue
                 tds[fqdn][_type] = td
             self._traffic_directors = dict(tds)
@@ -455,9 +456,9 @@ class DynProvider(BaseProvider):
                     .record_sets[0]
             except IndexError:
                 # problems indicate a malformed ruleset, ignore it
-                self.log.warn('_populate_dynamic_pools: '
-                              'malformed response_pool "%s" ignoring',
-                              response_pool.label)
+                self.log.warning('_populate_dynamic_pools: '
+                                 'malformed response_pool "%s" ignoring',
+                                 response_pool.label)
                 continue
 
             label = response_pool.label
@@ -505,9 +506,9 @@ class DynProvider(BaseProvider):
                     if fallback != 'default':
                         pools[pool]['fallback'] = fallback
             else:
-                self.log.warn('_populate_dynamic_pools: '
-                              'ruleset "%s" has no response_pools',
-                              ruleset.label)
+                self.log.warning('_populate_dynamic_pools: '
+                                 'ruleset "%s" has no response_pools',
+                                 ruleset.label)
                 continue
 
             # OK we have the rule's pool info, record it and work on the rule's
@@ -535,9 +536,9 @@ class DynProvider(BaseProvider):
             elif criteria_type == 'always':
                 pass
             else:
-                self.log.warn('_populate_dynamic_rules: '
-                              'unsupported criteria_type "%s", ignoring',
-                              criteria_type)
+                self.log.warning('_populate_dynamic_rules: '
+                                 'unsupported criteria_type "%s", ignoring',
+                                 criteria_type)
                 continue
 
             rules.append(rule)
@@ -1226,9 +1227,9 @@ class DynProvider(BaseProvider):
                 # just break at the point where the loop was going to happen
                 # and log about it. Note that any time we hit this we're likely
                 # to hit it multiple times as we configure the other pools
-                self.log.warn('_mod_dynamic_rulesets: loop detected in '
-                              'fallback chain, fallback=%s, seen=%s', fallback,
-                              seen)
+                self.log.warning('_mod_dynamic_rulesets: loop detected in '
+                                 'fallback chain, fallback=%s, seen=%s',
+                                 fallback, seen)
 
             # and always add default as the last
             ruleset.add_response_pool(active_pools['default'], index=999)

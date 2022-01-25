@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import find_packages, setup
 
 
 def descriptions():
@@ -25,13 +25,16 @@ setup(
     long_description=long_description,
     long_description_content_type='text/markdown',
     name='octodns-dyn',
-    packages=('octodns_dyn',),
+    packages=find_packages(),
     python_requires='>=3.6',
-    install_requires=('octodns>=0.9.14', 'dyn==1.8.1'),
+    install_requires=(
+        'dyn==1.8.1',
+        'octodns>=0.9.14',
+    ),
     url='https://github.com/octodns/octodns-dyn',
     version=version(),
     tests_require=(
-        'nose',
-        'nose-no-network',
+        'pytest',
+        'pytest-network',
     ),
 )
