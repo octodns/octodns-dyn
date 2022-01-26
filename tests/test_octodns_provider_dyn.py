@@ -162,7 +162,7 @@ class TestDynProvider(TestCase):
         execute_mock.assert_has_calls([
             call('/Zone/unit.tests/', 'GET', {}),
         ])
-        self.assertEquals(set(), got.records)
+        self.assertEqual(set(), got.records)
 
     @patch('dyn.core.SessionEngine.execute')
     def test_populate(self, execute_mock):
@@ -364,7 +364,7 @@ class TestDynProvider(TestCase):
             call('/AllRecord/unit.tests/unit.tests./', 'GET', {'detail': 'Y'})
         ])
         changes = self.expected.changes(got, SimpleProvider())
-        self.assertEquals([], changes)
+        self.assertEqual([], changes)
 
     @patch('dyn.core.SessionEngine.execute')
     def test_sync(self, execute_mock):
@@ -449,10 +449,10 @@ class TestDynProvider(TestCase):
                 self.assertFalse(plan.exists)
             add_mock.assert_called()
             # Once for each dyn record (8 Records, 2 of which have dual values)
-            self.assertEquals(15, len(add_mock.call_args_list))
+            self.assertEqual(15, len(add_mock.call_args_list))
         execute_mock.assert_has_calls([call('/Zone/unit.tests/', 'GET', {}),
                                        call('/Zone/unit.tests/', 'GET', {})])
-        self.assertEquals(10, len(plan.changes))
+        self.assertEqual(10, len(plan.changes))
 
         execute_mock.reset_mock()
 
@@ -494,13 +494,13 @@ class TestDynProvider(TestCase):
                     self.assertTrue(plan.exists)
                 # we expect 4 deletes, 2 from actual deletes and 2 from
                 # updates which delete and recreate
-                self.assertEquals(4, len(delete_mock.call_args_list))
+                self.assertEqual(4, len(delete_mock.call_args_list))
             # the 2 (re)creates
-            self.assertEquals(2, len(add_mock.call_args_list))
+            self.assertEqual(2, len(add_mock.call_args_list))
         execute_mock.assert_has_calls([
             call('/AllRecord/unit.tests/unit.tests./', 'GET', {'detail': 'Y'})
         ])
-        self.assertEquals(3, len(plan.changes))
+        self.assertEqual(3, len(plan.changes))
 
 
 class TestDynProviderGeo(TestCase):
@@ -638,11 +638,11 @@ class TestDynProviderGeo(TestCase):
         provider = DynProvider('test', 'cust', 'user', 'pass', True)
         # short-circuit session checking
         provider._dyn_sess = True
-        provider.log.warn = MagicMock()
+        provider.log.warning = MagicMock()
 
         # no tds
         mock.side_effect = [{'data': []}]
-        self.assertEquals({}, provider.traffic_directors)
+        self.assertEqual({}, provider.traffic_directors)
 
         # a supported td and an ignored one
         response = {
@@ -679,16 +679,16 @@ class TestDynProviderGeo(TestCase):
         }
         mock.side_effect = [response]
         # first make sure that we get the empty version from cache
-        self.assertEquals({}, provider.traffic_directors)
+        self.assertEqual({}, provider.traffic_directors)
         # reach in and bust the cache
         provider._traffic_directors = None
         tds = provider.traffic_directors
-        self.assertEquals(set(['unit.tests.', 'geo.unit.tests.']),
-                          set(tds.keys()))
-        self.assertEquals(['A'], list(tds['unit.tests.'].keys()))
-        self.assertEquals(['A'], list(tds['geo.unit.tests.'].keys()))
-        provider.log.warn.assert_called_with("Unsupported TrafficDirector "
-                                             "'%s'", 'something else')
+        self.assertEqual(set(['unit.tests.', 'geo.unit.tests.']),
+                         set(tds.keys()))
+        self.assertEqual(['A'], list(tds['unit.tests.'].keys()))
+        self.assertEqual(['A'], list(tds['geo.unit.tests.'].keys()))
+        provider.log.warning.assert_called_with("Unsupported TrafficDirector "
+                                                "'%s'", 'something else')
 
     @patch('dyn.core.SessionEngine.execute')
     def test_traffic_director_monitor(self, mock):
@@ -738,7 +738,7 @@ class TestDynProviderGeo(TestCase):
             }
         })
         monitor = provider._traffic_director_monitor(record)
-        self.assertEquals(geo_monitor_id, monitor.dsf_monitor_id)
+        self.assertEqual(geo_monitor_id, monitor.dsf_monitor_id)
         # should see a request for the list and a create
         mock.assert_has_calls([
             call('/DSFMonitor/', 'GET', {'detail': 'Y'}),
@@ -773,7 +773,7 @@ class TestDynProviderGeo(TestCase):
         })
         mock.reset_mock()
         monitor = provider._traffic_director_monitor(record)
-        self.assertEquals(self.monitor_id, monitor.dsf_monitor_id)
+        self.assertEqual(self.monitor_id, monitor.dsf_monitor_id)
         # should have resulted in no calls b/c exists & we've cached the list
         mock.assert_not_called()
 
@@ -818,7 +818,7 @@ class TestDynProviderGeo(TestCase):
             'status': 'success'
         }]
         monitor = provider._traffic_director_monitor(record)
-        self.assertEquals(self.monitor_id, monitor.dsf_monitor_id)
+        self.assertEqual(self.monitor_id, monitor.dsf_monitor_id)
         # should have resulted an update
         mock.assert_has_calls([
             call('/DSFMonitor/42a/', 'PUT', {
@@ -836,10 +836,10 @@ class TestDynProviderGeo(TestCase):
         self.assertTrue('unit.tests.:A' in
                         provider._traffic_director_monitors)
         monitor = provider._traffic_director_monitors['unit.tests.:A']
-        self.assertEquals('bleep.bloop', monitor.host)
-        self.assertEquals('/_nope', monitor.path)
-        self.assertEquals('HTTP', monitor.protocol)
-        self.assertEquals('8080', monitor.port)
+        self.assertEqual('bleep.bloop', monitor.host)
+        self.assertEqual('/_nope', monitor.path)
+        self.assertEqual('HTTP', monitor.protocol)
+        self.assertEqual('8080', monitor.port)
 
         # test upgrading an old label
         record = Record.new(existing, 'old-label', {
@@ -874,7 +874,7 @@ class TestDynProviderGeo(TestCase):
             'status': 'success'
         }]
         monitor = provider._traffic_director_monitor(record)
-        self.assertEquals(self.monitor_id, monitor.dsf_monitor_id)
+        self.assertEqual(self.monitor_id, monitor.dsf_monitor_id)
         # should have resulted an update
         mock.assert_has_calls([
             call('/DSFMonitor/b52/', 'PUT', {
@@ -903,7 +903,7 @@ class TestDynProviderGeo(TestCase):
         desired.add_record(record)
         extra = provider._extra_changes(desired=desired,
                                         changes=[Create(record)])
-        self.assertEquals(0, len(extra))
+        self.assertEqual(0, len(extra))
 
         # in changes, noop
         desired = Zone('unit.tests.', [])
@@ -918,11 +918,11 @@ class TestDynProviderGeo(TestCase):
         desired.add_record(record)
         extra = provider._extra_changes(desired=desired,
                                         changes=[Create(record)])
-        self.assertEquals(0, len(extra))
+        self.assertEqual(0, len(extra))
 
         # no diff, no extra
         extra = provider._extra_changes(desired=desired, changes=[])
-        self.assertEquals(0, len(extra))
+        self.assertEqual(0, len(extra))
 
         # monitors should have been fetched now
         mock.assert_called_once()
@@ -945,10 +945,10 @@ class TestDynProviderGeo(TestCase):
         })
         desired.add_record(record)
         extra = provider._extra_changes(desired=desired, changes=[])
-        self.assertEquals(1, len(extra))
+        self.assertEqual(1, len(extra))
         extra = extra[0]
         self.assertIsInstance(extra, Update)
-        self.assertEquals(record, extra.record)
+        self.assertEqual(record, extra.record)
 
         # missing health check
         desired = Zone('unit.tests.', [])
@@ -962,10 +962,10 @@ class TestDynProviderGeo(TestCase):
         })
         desired.add_record(record)
         extra = provider._extra_changes(desired=desired, changes=[])
-        self.assertEquals(1, len(extra))
+        self.assertEqual(1, len(extra))
         extra = extra[0]
         self.assertIsInstance(extra, Update)
-        self.assertEquals(record, extra.record)
+        self.assertEqual(record, extra.record)
 
     @patch('dyn.core.SessionEngine.execute')
     def test_populate_traffic_directors_empty(self, mock):
@@ -983,7 +983,7 @@ class TestDynProviderGeo(TestCase):
         ]
         got = Zone('unit.tests.', [])
         provider.populate(got)
-        self.assertEquals(0, len(got.records))
+        self.assertEqual(0, len(got.records))
         mock.assert_has_calls([
             call('/DSF/', 'GET', {'detail': 'Y'}),
             call('/Zone/unit.tests/', 'GET', {}),
@@ -1013,7 +1013,7 @@ class TestDynProviderGeo(TestCase):
             {'data': {}},
         ]
         provider.populate(got)
-        self.assertEquals(1, len(got.records))
+        self.assertEqual(1, len(got.records))
         self.assertFalse(self.expected_geo.changes(got, provider))
         mock.assert_has_calls([
             call('/DSF/', 'GET', {'detail': 'Y'}),
@@ -1041,7 +1041,7 @@ class TestDynProviderGeo(TestCase):
         ]
         got = Zone('unit.tests.', [])
         provider.populate(got)
-        self.assertEquals(1, len(got.records))
+        self.assertEqual(1, len(got.records))
         self.assertFalse(self.expected_regular.changes(got, provider))
         mock.assert_has_calls([
             call('/DSF/', 'GET', {'detail': 'Y'}),
@@ -1071,7 +1071,7 @@ class TestDynProviderGeo(TestCase):
         ]
         got = Zone('unit.tests.', [])
         provider.populate(got)
-        self.assertEquals(1, len(got.records))
+        self.assertEqual(1, len(got.records))
         self.assertFalse(self.expected_geo.changes(got, provider))
         mock.assert_has_calls([
             call('/DSF/', 'GET', {'detail': 'Y'}),
@@ -1126,10 +1126,10 @@ class TestDynProviderGeo(TestCase):
         ]
         got = Zone('unit.tests.', [])
         provider.populate(got)
-        self.assertEquals(1, len(got.records))
+        self.assertEqual(1, len(got.records))
         # we expect a change here for the record, the values aren't important,
         # so just compare set contents (which does name and type)
-        self.assertEquals(self.expected_geo.records, got.records)
+        self.assertEqual(self.expected_geo.records, got.records)
         mock.assert_has_calls([
             call('/DSF/', 'GET', {'detail': 'Y'}),
             call('/DSFNode/2ERWXQNsb_IKG2YZgYqkPvk0PBM', 'GET', {}),
@@ -1293,9 +1293,9 @@ class TestDynProviderGeo(TestCase):
         pool = provider._find_or_create_geo_pool(td, [], 'default', 'A',
                                                  values)
         self.assertIsInstance(pool, DSFResponsePool)
-        self.assertEquals(1, len(pool.rs_chains))
+        self.assertEqual(1, len(pool.rs_chains))
         records = pool.rs_chains[0].record_sets[0].records
-        self.assertEquals(values, [r.address for r in records])
+        self.assertEqual(values, [r.address for r in records])
         mock.assert_called_once_with(td)
 
         # cache hit, use the one we just created
@@ -1303,15 +1303,15 @@ class TestDynProviderGeo(TestCase):
         pools = [pool]
         cached = provider._find_or_create_geo_pool(td, pools, 'default', 'A',
                                                    values)
-        self.assertEquals(pool, cached)
+        self.assertEqual(pool, cached)
         mock.assert_not_called()
 
         # cache miss, non-matching label
         mock.reset_mock()
         miss = provider._find_or_create_geo_pool(td, pools, 'NA-US-CA', 'A',
                                                  values)
-        self.assertNotEquals(pool, miss)
-        self.assertEquals('NA-US-CA', miss.label)
+        self.assertNotEqual(pool, miss)
+        self.assertEqual('NA-US-CA', miss.label)
         mock.assert_called_once_with(td)
 
         # cache miss, matching label, mis-matching values
@@ -1319,7 +1319,7 @@ class TestDynProviderGeo(TestCase):
         values = ['2.2.3.4.', '2.2.3.5']
         miss = provider._find_or_create_geo_pool(td, pools, 'default', 'A',
                                                  values)
-        self.assertNotEquals(pool, miss)
+        self.assertNotEqual(pool, miss)
         mock.assert_called_once_with(td)
 
     @patch('dyn.tm.services.DSFRuleset.add_response_pool')
@@ -1495,7 +1495,7 @@ class TestDynProviderAlias(TestCase):
             call('/AllRecord/unit.tests/unit.tests./', 'GET', {'detail': 'Y'})
         ])
         changes = self.expected.changes(got, SimpleProvider())
-        self.assertEquals([], changes)
+        self.assertEqual([], changes)
 
     @patch('dyn.core.SessionEngine.execute')
     def test_sync(self, execute_mock):
@@ -1541,10 +1541,10 @@ class TestDynProviderAlias(TestCase):
                 update_mock.assert_called()
             add_mock.assert_called()
             # Once for each dyn record
-            self.assertEquals(2, len(add_mock.call_args_list))
+            self.assertEqual(2, len(add_mock.call_args_list))
         execute_mock.assert_has_calls([call('/Zone/unit.tests/', 'GET', {}),
                                        call('/Zone/unit.tests/', 'GET', {})])
-        self.assertEquals(2, len(plan.changes))
+        self.assertEqual(2, len(plan.changes))
 
 
 # Need a class that doesn't do all the "real" stuff, but gets our monkey
@@ -1575,44 +1575,44 @@ class TestDSFMonitorMonkeyPatching(TestCase):
     def test_host(self):
         monitor = DummyDSFMonitor(host='host.com', path='/path',
                                   protocol='HTTP', port=8080)
-        self.assertEquals('host.com', monitor.host)
-        self.assertEquals('/path', monitor.path)
-        self.assertEquals('HTTP', monitor.protocol)
-        self.assertEquals(8080, monitor.port)
+        self.assertEqual('host.com', monitor.host)
+        self.assertEqual('/path', monitor.path)
+        self.assertEqual('HTTP', monitor.protocol)
+        self.assertEqual(8080, monitor.port)
 
         monitor = DummyDSFMonitor(options_host='host.com',
                                   options_path='/path',
                                   options_protocol='HTTP', options_port=8080)
-        self.assertEquals('host.com', monitor.host)
-        self.assertEquals('/path', monitor.path)
+        self.assertEqual('host.com', monitor.host)
+        self.assertEqual('/path', monitor.path)
 
         monitor.host = 'other.com'
-        self.assertEquals('other.com', monitor.host)
+        self.assertEqual('other.com', monitor.host)
         monitor.path = '/other-path'
-        self.assertEquals('/other-path', monitor.path)
+        self.assertEqual('/other-path', monitor.path)
         monitor.protocol = 'HTTPS'
-        self.assertEquals('HTTPS', monitor.protocol)
+        self.assertEqual('HTTPS', monitor.protocol)
         monitor.port = 8081
-        self.assertEquals(8081, monitor.port)
+        self.assertEqual(8081, monitor.port)
 
         monitor = DummyDSFMonitor()
         monitor.host = 'other.com'
-        self.assertEquals('other.com', monitor.host)
+        self.assertEqual('other.com', monitor.host)
         monitor = DummyDSFMonitor()
         monitor.path = '/other-path'
-        self.assertEquals('/other-path', monitor.path)
+        self.assertEqual('/other-path', monitor.path)
         monitor.protocol = 'HTTP'
-        self.assertEquals('HTTP', monitor.protocol)
+        self.assertEqual('HTTP', monitor.protocol)
         monitor.port = 8080
-        self.assertEquals(8080, monitor.port)
+        self.assertEqual(8080, monitor.port)
 
         # Just to exercise the _options init
         monitor = DummyDSFMonitor()
         monitor.protocol = 'HTTP'
-        self.assertEquals('HTTP', monitor.protocol)
+        self.assertEqual('HTTP', monitor.protocol)
         monitor = DummyDSFMonitor()
         monitor.port = 8080
-        self.assertEquals(8080, monitor.port)
+        self.assertEqual(8080, monitor.port)
 
 
 class DummyRecord(object):
@@ -1680,13 +1680,13 @@ class TestDynProviderDynamic(TestCase):
                 self.weight = weight
 
         record = DummyRecord('1.2.3.4', 32)
-        self.assertEquals({
+        self.assertEqual({
             'value': record.address,
             'weight': record.weight,
         }, provider._value_for_A('A', record))
 
         record = DummyRecord('2601:644:500:e210:62f8:1dff:feb8:947a', 32)
-        self.assertEquals({
+        self.assertEqual({
             'value': record.address,
             'weight': record.weight,
         }, provider._value_for_AAAA('AAAA', record))
@@ -1701,7 +1701,7 @@ class TestDynProviderDynamic(TestCase):
                 self.weight = weight
 
         record = DummyRecord('foo.unit.tests.', 32)
-        self.assertEquals({
+        self.assertEqual({
             'value': record.cname,
             'weight': record.weight,
         }, provider._value_for_CNAME('CNAME', record))
@@ -1711,8 +1711,8 @@ class TestDynProviderDynamic(TestCase):
 
         # Empty data, empty returns
         default, pools = provider._populate_dynamic_pools('A', [], [])
-        self.assertEquals({}, default)
-        self.assertEquals({}, pools)
+        self.assertEqual({}, default)
+        self.assertEqual({}, pools)
 
         records_a = [DummyRecord('1.2.3.4', 32, 60)]
         default_a = DummyResponsePool('default', records_a)
@@ -1721,12 +1721,12 @@ class TestDynProviderDynamic(TestCase):
         response_pools = [default_a]
         default, pools = provider._populate_dynamic_pools('A', [],
                                                           response_pools)
-        self.assertEquals({
+        self.assertEqual({
             'ttl': 60,
             'type': 'A',
             'values': ['1.2.3.4'],
         }, default)
-        self.assertEquals({}, pools)
+        self.assertEqual({}, pools)
 
         multi_a = [
             DummyRecord('1.2.3.5', 42, 90),
@@ -1739,8 +1739,8 @@ class TestDynProviderDynamic(TestCase):
         response_pools = [example_a]
         default, pools = provider._populate_dynamic_pools('A', [],
                                                           response_pools)
-        self.assertEquals({}, default)
-        self.assertEquals({
+        self.assertEqual({}, default)
+        self.assertEqual({
             'example': {
                 'values': [{
                     'value': '1.2.3.5',
@@ -1759,8 +1759,8 @@ class TestDynProviderDynamic(TestCase):
         response_pools = [example_a, example_a]
         default, pools = provider._populate_dynamic_pools('A', [],
                                                           response_pools)
-        self.assertEquals({}, default)
-        self.assertEquals({
+        self.assertEqual({}, default)
+        self.assertEqual({
             'example': {
                 'values': [{
                     'value': '1.2.3.5',
@@ -1779,12 +1779,12 @@ class TestDynProviderDynamic(TestCase):
         response_pools = [example_a, default_a, example_a]
         default, pools = provider._populate_dynamic_pools('A', [],
                                                           response_pools)
-        self.assertEquals({
+        self.assertEqual({
             'ttl': 60,
             'type': 'A',
             'values': ['1.2.3.4'],
         }, default)
-        self.assertEquals({
+        self.assertEqual({
             'example': {
                 'values': [{
                     'value': '1.2.3.5',
@@ -1804,8 +1804,8 @@ class TestDynProviderDynamic(TestCase):
         response_pools = [empty_a]
         default, pools = provider._populate_dynamic_pools('A', [],
                                                           response_pools)
-        self.assertEquals({}, default)
-        self.assertEquals({}, pools)
+        self.assertEqual({}, default)
+        self.assertEqual({}, pools)
 
     def test_populate_dynamic_rules(self):
         provider = DynProvider('test', 'cust', 'user', 'pass')
@@ -1814,19 +1814,19 @@ class TestDynProviderDynamic(TestCase):
         rulesets = []
         pools = {}
         rules = provider._populate_dynamic_rules(rulesets, pools)
-        self.assertEquals([], rules)
+        self.assertEqual([], rules)
 
         # default: is ignored
         rulesets = [DummyRuleset('default:')]
         pools = {}
         rules = provider._populate_dynamic_rules(rulesets, pools)
-        self.assertEquals([], rules)
+        self.assertEqual([], rules)
 
         # No ResponsePools in RuleSet, ignored
         rulesets = [DummyRuleset('0:abcdefg')]
         pools = {}
         rules = provider._populate_dynamic_rules(rulesets, pools)
-        self.assertEquals([], rules)
+        self.assertEqual([], rules)
 
         # ResponsePool, no fallback
         rulesets = [DummyRuleset('0:abcdefg', [
@@ -1834,7 +1834,7 @@ class TestDynProviderDynamic(TestCase):
         ])]
         pools = {}
         rules = provider._populate_dynamic_rules(rulesets, pools)
-        self.assertEquals([{
+        self.assertEqual([{
             'pool': 'some-pool',
         }], rules)
 
@@ -1845,7 +1845,7 @@ class TestDynProviderDynamic(TestCase):
         ])]
         pools = {}
         rules = provider._populate_dynamic_rules(rulesets, pools)
-        self.assertEquals([{
+        self.assertEqual([{
             'pool': 'some-pool',
         }], rules)
 
@@ -1858,11 +1858,11 @@ class TestDynProviderDynamic(TestCase):
             'some-pool': {},
         }
         rules = provider._populate_dynamic_rules(rulesets, pools)
-        self.assertEquals([{
+        self.assertEqual([{
             'pool': 'some-pool',
         }], rules)
         # fallback has been installed
-        self.assertEquals({
+        self.assertEqual({
             'some-pool': {
                 'fallback': 'some-fallback',
             }
@@ -1874,7 +1874,7 @@ class TestDynProviderDynamic(TestCase):
         ], 'unsupported')]
         pools = {}
         rules = provider._populate_dynamic_rules(rulesets, pools)
-        self.assertEquals([], rules)
+        self.assertEqual([], rules)
 
         # Geo Continent/Region
         response_pools = [DummyResponsePool('some-pool')]
@@ -1890,7 +1890,7 @@ class TestDynProviderDynamic(TestCase):
         rulesets = [ruleset]
         pools = {}
         rules = provider._populate_dynamic_rules(rulesets, pools)
-        self.assertEquals([{
+        self.assertEqual([{
             'geos': ['AF', 'NA-US', 'NA-US-OR'],
             'pool': 'some-pool',
         }], rules)
@@ -1923,15 +1923,15 @@ class TestDynProviderDynamic(TestCase):
                                                              td, rulesets,
                                                              True)
         self.assertTrue(record)
-        self.assertEquals('A', record._type)
-        self.assertEquals(90, record.ttl)
-        self.assertEquals([
+        self.assertEqual('A', record._type)
+        self.assertEqual(90, record.ttl)
+        self.assertEqual([
             '1.2.3.5',
             '1.2.3.6',
             '1.2.3.7',
         ], record.values)
         self.assertTrue('pool1' in record.dynamic.pools)
-        self.assertEquals({
+        self.assertEqual({
             'fallback': None,
             'values': [{
                 'value': '1.2.3.5',
@@ -1947,11 +1947,11 @@ class TestDynProviderDynamic(TestCase):
                 'status': 'obey',
             }]
         }, record.dynamic.pools['pool1'].data)
-        self.assertEquals(2, len(record.dynamic.rules))
-        self.assertEquals({
+        self.assertEqual(2, len(record.dynamic.rules))
+        self.assertEqual({
             'pool': 'default',
         }, record.dynamic.rules[0].data)
-        self.assertEquals({
+        self.assertEqual({
             'pool': 'pool1',
             'geos': ['AF', 'NA-US', 'NA-US-OR'],
         }, record.dynamic.rules[1].data)
@@ -1964,14 +1964,14 @@ class TestDynProviderDynamic(TestCase):
         }
         zone = Zone('unit.tests.', [])
         records = provider._populate_traffic_directors(zone, lenient=True)
-        self.assertEquals(1, len(records))
+        self.assertEqual(1, len(records))
 
     def test_dynamic_records_for_A(self):
         provider = DynProvider('test', 'cust', 'user', 'pass')
 
         # Empty
         records = provider._dynamic_records_for_A([], {})
-        self.assertEquals([], records)
+        self.assertEqual([], records)
 
         # Basic
         values = [{
@@ -1981,24 +1981,24 @@ class TestDynProviderDynamic(TestCase):
             'weight': 42,
         }]
         records = provider._dynamic_records_for_A(values, {})
-        self.assertEquals(2, len(records))
+        self.assertEqual(2, len(records))
         record = records[0]
-        self.assertEquals('1.2.3.4', record.address)
-        self.assertEquals(1, record.weight)
+        self.assertEqual('1.2.3.4', record.address)
+        self.assertEqual(1, record.weight)
         record = records[1]
-        self.assertEquals('1.2.3.5', record.address)
-        self.assertEquals(42, record.weight)
+        self.assertEqual('1.2.3.5', record.address)
+        self.assertEqual(42, record.weight)
 
         # With extras
         records = provider._dynamic_records_for_A(values, {
             'automation': 'manual',
             'eligible': True,
         })
-        self.assertEquals(2, len(records))
+        self.assertEqual(2, len(records))
         record = records[0]
-        self.assertEquals('1.2.3.4', record.address)
-        self.assertEquals(1, record.weight)
-        self.assertEquals('manual', record._automation)
+        self.assertEqual('1.2.3.4', record.address)
+        self.assertEqual(1, record.weight)
+        self.assertEqual('manual', record._automation)
         self.assertTrue(record.eligible)
 
     def test_dynamic_records_for_AAAA(self):
@@ -2006,7 +2006,7 @@ class TestDynProviderDynamic(TestCase):
 
         # Empty
         records = provider._dynamic_records_for_AAAA([], {})
-        self.assertEquals([], records)
+        self.assertEqual([], records)
 
         # Basic
         values = [{
@@ -2016,27 +2016,27 @@ class TestDynProviderDynamic(TestCase):
             'weight': 42,
         }]
         records = provider._dynamic_records_for_AAAA(values, {})
-        self.assertEquals(2, len(records))
+        self.assertEqual(2, len(records))
         record = records[0]
-        self.assertEquals('2601:644:500:e210:62f8:1dff:feb8:947a',
-                          record.address)
-        self.assertEquals(1, record.weight)
+        self.assertEqual('2601:644:500:e210:62f8:1dff:feb8:947a',
+                         record.address)
+        self.assertEqual(1, record.weight)
         record = records[1]
-        self.assertEquals('2601:644:500:e210:62f8:1dff:feb8:947b',
-                          record.address)
-        self.assertEquals(42, record.weight)
+        self.assertEqual('2601:644:500:e210:62f8:1dff:feb8:947b',
+                         record.address)
+        self.assertEqual(42, record.weight)
 
         # With extras
         records = provider._dynamic_records_for_AAAA(values, {
             'automation': 'manual',
             'eligible': True,
         })
-        self.assertEquals(2, len(records))
+        self.assertEqual(2, len(records))
         record = records[0]
-        self.assertEquals('2601:644:500:e210:62f8:1dff:feb8:947a',
-                          record.address)
-        self.assertEquals(1, record.weight)
-        self.assertEquals('manual', record._automation)
+        self.assertEqual('2601:644:500:e210:62f8:1dff:feb8:947a',
+                         record.address)
+        self.assertEqual(1, record.weight)
+        self.assertEqual('manual', record._automation)
         self.assertTrue(record.eligible)
 
     def test_dynamic_records_for_CNAME(self):
@@ -2044,7 +2044,7 @@ class TestDynProviderDynamic(TestCase):
 
         # Empty
         records = provider._dynamic_records_for_CNAME([], {})
-        self.assertEquals([], records)
+        self.assertEqual([], records)
 
         # Basic
         values = [{
@@ -2054,24 +2054,24 @@ class TestDynProviderDynamic(TestCase):
             'weight': 42,
         }]
         records = provider._dynamic_records_for_CNAME(values, {})
-        self.assertEquals(2, len(records))
+        self.assertEqual(2, len(records))
         record = records[0]
-        self.assertEquals('target-1.unit.tests.', record.cname)
-        self.assertEquals(1, record.weight)
+        self.assertEqual('target-1.unit.tests.', record.cname)
+        self.assertEqual(1, record.weight)
         record = records[1]
-        self.assertEquals('target-2.unit.tests.', record.cname)
-        self.assertEquals(42, record.weight)
+        self.assertEqual('target-2.unit.tests.', record.cname)
+        self.assertEqual(42, record.weight)
 
         # With extras
         records = provider._dynamic_records_for_CNAME(values, {
             'automation': 'manual',
             'eligible': True,
         })
-        self.assertEquals(2, len(records))
+        self.assertEqual(2, len(records))
         record = records[0]
-        self.assertEquals('target-1.unit.tests.', record.cname)
-        self.assertEquals(1, record.weight)
-        self.assertEquals('manual', record._automation)
+        self.assertEqual('target-1.unit.tests.', record.cname)
+        self.assertEqual(1, record.weight)
+        self.assertEqual('manual', record._automation)
         self.assertTrue(record.eligible)
 
     def test_dynamic_value_sort_key(self):
@@ -2085,7 +2085,7 @@ class TestDynProviderDynamic(TestCase):
             'value': '1.2.3.2',
         }]
 
-        self.assertEquals([{
+        self.assertEqual([{
             'value': '1.2.3.1',
         }, {
             'value': '1.2.3.127',
@@ -2116,13 +2116,13 @@ class TestDynProviderDynamic(TestCase):
         pool = provider._find_or_create_dynamic_pool(td, pools, label, 'A',
                                                      values)
         self.assertIsInstance(pool, DSFResponsePool)
-        self.assertEquals(1, len(pool.rs_chains))
-        self.assertEquals(1, len(pool.rs_chains[0].record_sets))
+        self.assertEqual(1, len(pool.rs_chains))
+        self.assertEqual(1, len(pool.rs_chains[0].record_sets))
         records = pool.rs_chains[0].record_sets[0].records
-        self.assertEquals(4, len(records))
-        self.assertEquals([v['value'] for v in values],
-                          [r.address for r in records])
-        self.assertEquals([1 for r in records], [r.weight for r in records])
+        self.assertEqual(4, len(records))
+        self.assertEqual([v['value'] for v in values],
+                         [r.address for r in records])
+        self.assertEqual([1 for r in records], [r.weight for r in records])
         mock.assert_called_once_with(td)
 
         # Ask for the pool we created above and include it in the canidate list
@@ -2130,7 +2130,7 @@ class TestDynProviderDynamic(TestCase):
         pools = [pool]
         cached = provider._find_or_create_dynamic_pool(td, pools, label, 'A',
                                                        values)
-        self.assertEquals(pool, cached)
+        self.assertEqual(pool, cached)
         mock.assert_not_called()
 
         # Invalid candidate pool, still finds the valid one that's there too
@@ -2139,7 +2139,7 @@ class TestDynProviderDynamic(TestCase):
         pools = [invalid, pool]
         cached = provider._find_or_create_dynamic_pool(td, pools, label, 'A',
                                                        values)
-        self.assertEquals(pool, cached)
+        self.assertEqual(pool, cached)
         mock.assert_not_called()
 
         # Ask for a pool with a different label, should create a new one
@@ -2147,7 +2147,7 @@ class TestDynProviderDynamic(TestCase):
         pools = [pool]
         other = provider._find_or_create_dynamic_pool(td, pools, 'other', 'A',
                                                       values)
-        self.assertEquals('other', other.label)
+        self.assertEqual('other', other.label)
         mock.assert_called_once_with(td)
 
         # Ask for a pool that matches label-wise, but has different values
@@ -2158,14 +2158,14 @@ class TestDynProviderDynamic(TestCase):
         pools = [pool]
         new = provider._find_or_create_dynamic_pool(td, pools, label, 'A',
                                                     values)
-        self.assertEquals(label, new.label)
-        self.assertEquals(1, len(new.rs_chains))
-        self.assertEquals(1, len(new.rs_chains[0].record_sets))
+        self.assertEqual(label, new.label)
+        self.assertEqual(1, len(new.rs_chains))
+        self.assertEqual(1, len(new.rs_chains[0].record_sets))
         records = new.rs_chains[0].record_sets[0].records
-        self.assertEquals(1, len(records))
-        self.assertEquals([v['value'] for v in values],
-                          [r.address for r in records])
-        self.assertEquals([1 for r in records], [r.weight for r in records])
+        self.assertEqual(1, len(records))
+        self.assertEqual([v['value'] for v in values],
+                         [r.address for r in records])
+        self.assertEqual([1 for r in records], [r.weight for r in records])
         mock.assert_called_once_with(td)
 
     zone = Zone('unit.tests.', [])
