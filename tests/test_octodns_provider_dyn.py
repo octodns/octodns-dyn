@@ -53,6 +53,16 @@ class TestDynProvider(TestCase):
             'ttl': 300,
             'values': ['1.2.3.4']
         }),
+        ('', {
+            'type': 'NS',
+            'ttl': 3600,
+            'values': [
+                'ns1.p10.dynect.net.',
+                'ns2.p10.dynect.net.',
+                'ns3.p10.dynect.net.',
+                'ns4.p10.dynect.net.',
+            ]
+        }),
         ('cname', {
             'type': 'CNAME',
             'ttl': 301,
