@@ -161,7 +161,7 @@ class _CachingDynZone(DynZone):
             pass
 
     def __init__(self, zone_name, *args, **kwargs):
-        super(_CachingDynZone, self).__init__(zone_name, *args, **kwargs)
+        super().__init__(zone_name, *args, **kwargs)
         self.flush_cache()
 
     def flush_cache(self):
@@ -170,11 +170,11 @@ class _CachingDynZone(DynZone):
     def get_all_records(self):
         if self._cached_records is None:
             self._cached_records = \
-                super(_CachingDynZone, self).get_all_records()
+                super().get_all_records()
         return self._cached_records
 
     def publish(self):
-        super(_CachingDynZone, self).publish()
+        super().publish()
         self.flush_cache()
 
 
@@ -227,7 +227,7 @@ class DynProvider(BaseProvider):
                        customer, username, traffic_directors_enabled)
         # we have to set this before calling super b/c SUPPORTS_GEO requires it
         self.traffic_directors_enabled = traffic_directors_enabled
-        super(DynProvider, self).__init__(id, *args, **kwargs)
+        super().__init__(id, *args, **kwargs)
         self.customer = customer
         self.username = username
         self.password = password
