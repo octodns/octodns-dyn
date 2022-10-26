@@ -50,6 +50,7 @@ setup(
             'readme_renderer[md]>=26.0',
             'twine>=3.4.2',
         ),
+        'test': tests_require,
     },
     install_requires=(
         'dyn==1.8.1',
