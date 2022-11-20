@@ -378,7 +378,9 @@ class TestDynProvider(TestCase):
 
     @patch('dyn.core.SessionEngine.execute')
     def test_sync(self, execute_mock):
-        provider = DynProvider('test', 'cust', 'user', 'pass')
+        provider = DynProvider(
+            'test', 'cust', 'user', 'pass', strict_supports=False
+        )
 
         # Test Zone create
         execute_mock.side_effect = [
