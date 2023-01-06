@@ -5,9 +5,9 @@
 from collections import defaultdict
 from dyn.tm.errors import DynectGetError
 from dyn.tm.services.dsf import DSFARecord, DSFAAAARecord, DSFCNAMERecord, \
-    DSFFailoverChain, DSFMonitor, DSFNode, DSFRecordSet, DSFResponsePool, \
-    DSFRuleset, TrafficDirector, get_all_dsf_monitors, get_all_dsf_services, \
-    get_response_pool
+    DSFDNAMERecord, DSFFailoverChain, DSFMonitor, DSFNode, DSFRecordSet, \
+    DSFResponsePool, DSFRuleset, TrafficDirector, get_all_dsf_monitors, \
+    get_all_dsf_services, get_response_pool
 from dyn.tm.session import DynectSession
 from dyn.tm.zones import Zone as DynZone
 from logging import getLogger
@@ -189,6 +189,7 @@ class DynProvider(BaseProvider):
         'alias_records': 'ALIAS',
         'caa_records': 'CAA',
         'cname_records': 'CNAME',
+        'dname_records': 'DNAME',
         'mx_records': 'MX',
         'naptr_records': 'NAPTR',
         'ns_records': 'NS',
@@ -294,6 +295,14 @@ class DynProvider(BaseProvider):
             'type': _type,
             'ttl': record.ttl,
             'value': record.cname,
+        }
+
+    def _data_for_DNAME(self, _type, records):
+        record = records[0]
+        return {
+            'type': _type,
+            'ttl': record.ttl,
+            'value': record.dname,
         }
 
     def _data_for_MX(self, _type, records):
@@ -433,6 +442,12 @@ class DynProvider(BaseProvider):
     def _value_for_CNAME(self, _type, record):
         return {
             'value': record.cname,
+            'weight': record.weight,
+        }
+
+    def _value_for_DNAME(self, _type, record):
+        return {
+            'value': record.dname,
             'weight': record.weight,
         }
 
@@ -712,6 +727,12 @@ class DynProvider(BaseProvider):
             'ttl': record.ttl,
         }]
 
+    def _kwargs_for_DNAME(self, record):
+        return [{
+            'dname': record.value,
+            'ttl': record.ttl,
+        }]
+
     def _kwargs_for_ALIAS(self, record):
         # NOTE: Dyn's UI doesn't allow editing of ALIAS ttl, but the API seems
         # to accept and store the values we send it just fine. No clue if they
@@ -869,6 +890,11 @@ class DynProvider(BaseProvider):
 
     def _dynamic_records_for_CNAME(self, values, record_extras):
         return [DSFCNAMERecord(v['value'], weight=v.get('weight', 1),
+                               **record_extras)
+                for v in values]
+
+    def _dynamic_records_for_DNAME(self, values, record_extras):
+        return [DSFDNAMERecord(v['value'], weight=v.get('weight', 1),
                                **record_extras)
                 for v in values]
 
@@ -1136,7 +1162,7 @@ class DynProvider(BaseProvider):
         label = f'default:{uuid4().hex}'
         ruleset = DSFRuleset(label, 'always', [])
         ruleset.create(td, index=insert_at)
-        # If/when we go beyond A, AAAA, and CNAME this will have to get
+        # If/when we go beyond A, AAAA, CNAME, and DNAME, this will have to get
         # more intelligent, probably a weighted_values method on Record objects
         # or something like that?
         try:
