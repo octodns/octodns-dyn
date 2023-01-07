@@ -1,19 +1,24 @@
 #
 #
 #
+import collections.abc  # noqa: E402
+# dyn libs needs the folowing alias as it's trying to use a
+# deprecated feature that worked up to python 3.9, but doesn't
+# in 3.10
+collections.Iterable = collections.abc.Iterable
 
-from dyn.tm.errors import DynectGetError
-from dyn.tm.services.dsf import DSFResponsePool
-from json import loads
-from unittest import TestCase
-from unittest.mock import MagicMock, call, patch
+from dyn.tm.errors import DynectGetError  # noqa: E402
+from dyn.tm.services.dsf import DSFResponsePool  # noqa: E402
+from json import loads  # noqa: E402
+from unittest import TestCase  # noqa: E402
+from unittest.mock import MagicMock, call, patch  # noqa: E402
 
-from octodns.record import Create, Delete, Record, Update
-from octodns.provider.base import Plan
-from octodns.zone import Zone
+from octodns.record import Create, Delete, Record, Update  # noqa: E402
+from octodns.provider.base import Plan  # noqa: E402
+from octodns.zone import Zone  # noqa: E402
 
 from octodns_dyn import DynProvider, _CachingDynZone, DSFMonitor, \
-    _dynamic_value_sort_key
+    _dynamic_value_sort_key  # noqa: E402
 
 
 class SimpleProvider(object):
@@ -474,10 +479,10 @@ class TestDynProvider(TestCase):
                 self.assertFalse(plan.exists)
             add_mock.assert_called()
             # Once for each dyn record (8 Records, 2 of which have dual values)
-            self.assertEqual(15, len(add_mock.call_args_list))
+            self.assertEqual(16, len(add_mock.call_args_list))
         execute_mock.assert_has_calls([call('/Zone/unit.tests/', 'GET', {}),
                                        call('/Zone/unit.tests/', 'GET', {})])
-        self.assertEqual(10, len(plan.changes))
+        self.assertEqual(11, len(plan.changes))
 
         execute_mock.reset_mock()
 
@@ -2476,6 +2481,10 @@ class TestDynProviderDynamic(TestCase):
             call(td_mock, index=0),
         ))
 
+    @patch('dyn.tm.services.DSFRuleset.add_response_pool')
+    @patch('dyn.tm.services.DSFRuleset.create')
+    # just lets us ignore the pool.create calls
+    @patch('dyn.tm.services.DSFResponsePool.create')
     def test_mod_dynamic_rulesets_create_DNAME(self, _, ruleset_create_mock,
                                                add_response_pool_mock):
         provider = DynProvider('test', 'cust', 'user', 'pass',
