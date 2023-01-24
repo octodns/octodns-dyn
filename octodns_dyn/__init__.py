@@ -1,14 +1,20 @@
 #
 #
 #
+import collections.abc
+from collections import defaultdict
+from logging import getLogger
+from threading import Lock
+from uuid import uuid4
+from octodns.record import Record, Update
+from octodns.record.geo import GeoCodes
+from octodns.provider.base import BaseProvider
 
-import collections.abc  # noqa: E402
 # dyn libs needs the folowing alias as it's trying to use a
 # deprecated feature that worked up to python 3.9, but doesn't
 # in 3.10
 collections.Iterable = collections.abc.Iterable
 
-from collections import defaultdict  # noqa: E402
 from dyn.tm.errors import DynectGetError  # noqa: E402
 from dyn.tm.services.dsf import DSFARecord, DSFAAAARecord, DSFCNAMERecord, \
     DSFDNAMERecord, DSFFailoverChain, DSFMonitor, DSFNode, DSFRecordSet, \
@@ -16,13 +22,7 @@ from dyn.tm.services.dsf import DSFARecord, DSFAAAARecord, DSFCNAMERecord, \
     get_all_dsf_services, get_response_pool  # noqa: E402
 from dyn.tm.session import DynectSession  # noqa: E402
 from dyn.tm.zones import Zone as DynZone  # noqa: E402
-from logging import getLogger  # noqa: E402
-from threading import Lock  # noqa: E402
-from uuid import uuid4  # noqa: E402
 
-from octodns.record import Record, Update  # noqa: E402
-from octodns.record.geo import GeoCodes  # noqa: E402
-from octodns.provider.base import BaseProvider  # noqa: E402
 
 __VERSION__ = '0.0.1'
 
