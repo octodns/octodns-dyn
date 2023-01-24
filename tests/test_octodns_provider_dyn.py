@@ -1,19 +1,24 @@
 #
 #
 #
+import collections.abc  # noqa: E402
+# dyn libs needs the folowing alias as it's trying to use a
+# deprecated feature that worked up to python 3.9, but doesn't
+# in 3.10
+collections.Iterable = collections.abc.Iterable
 
-from dyn.tm.errors import DynectGetError
-from dyn.tm.services.dsf import DSFResponsePool
-from json import loads
-from unittest import TestCase
-from unittest.mock import MagicMock, call, patch
+from dyn.tm.errors import DynectGetError  # noqa: E402
+from dyn.tm.services.dsf import DSFResponsePool  # noqa: E402
+from json import loads  # noqa: E402
+from unittest import TestCase  # noqa: E402
+from unittest.mock import MagicMock, call, patch  # noqa: E402
 
-from octodns.record import Create, Delete, Record, Update
-from octodns.provider.base import Plan
-from octodns.zone import Zone
+from octodns.record import Create, Delete, Record, Update  # noqa: E402
+from octodns.provider.base import Plan  # noqa: E402
+from octodns.zone import Zone  # noqa: E402
 
 from octodns_dyn import DynProvider, _CachingDynZone, DSFMonitor, \
-    _dynamic_value_sort_key
+    _dynamic_value_sort_key  # noqa: E402
 
 
 class SimpleProvider(object):
@@ -65,6 +70,11 @@ class TestDynProvider(TestCase):
         }),
         ('cname', {
             'type': 'CNAME',
+            'ttl': 301,
+            'value': 'unit.tests.'
+        }),
+        ('dname', {
+            'type': 'DNAME',
             'ttl': 301,
             'value': 'unit.tests.'
         }),
@@ -197,6 +207,14 @@ class TestDynProvider(TestCase):
                     'rdata': {'cname': 'unit.tests.'},
                     'record_id': 2,
                     'record_type': 'CNAME',
+                    'ttl': 301,
+                    'zone': 'unit.tests',
+                }],
+                'dname_records': [{
+                    'fqdn': 'dname.unit.tests',
+                    'rdata': {'dname': 'unit.tests.'},
+                    'record_id': 254597561,
+                    'record_type': 'DNAME',
                     'ttl': 301,
                     'zone': 'unit.tests',
                 }],
@@ -461,10 +479,10 @@ class TestDynProvider(TestCase):
                 self.assertFalse(plan.exists)
             add_mock.assert_called()
             # Once for each dyn record (8 Records, 2 of which have dual values)
-            self.assertEqual(15, len(add_mock.call_args_list))
+            self.assertEqual(16, len(add_mock.call_args_list))
         execute_mock.assert_has_calls([call('/Zone/unit.tests/', 'GET', {}),
                                        call('/Zone/unit.tests/', 'GET', {})])
-        self.assertEqual(10, len(plan.changes))
+        self.assertEqual(11, len(plan.changes))
 
         execute_mock.reset_mock()
 
@@ -1718,6 +1736,21 @@ class TestDynProviderDynamic(TestCase):
             'weight': record.weight,
         }, provider._value_for_CNAME('CNAME', record))
 
+    def test_value_for_DNAME(self):
+        provider = DynProvider('test', 'cust', 'user', 'pass')
+
+        class DummyRecord(object):
+
+            def __init__(self, dname, weight):
+                self.dname = dname
+                self.weight = weight
+
+        record = DummyRecord('foo.unit.tests.', 32)
+        self.assertEqual({
+            'value': record.dname,
+            'weight': record.weight,
+        }, provider._value_for_DNAME('DNAME', record))
+
     def test_populate_dynamic_pools(self):
         provider = DynProvider('test', 'cust', 'user', 'pass')
 
@@ -2086,6 +2119,41 @@ class TestDynProviderDynamic(TestCase):
         self.assertEqual('manual', record._automation)
         self.assertTrue(record.eligible)
 
+    def test_dynamic_records_for_DNAME(self):
+        provider = DynProvider('test', 'cust', 'user', 'pass')
+
+        # Empty
+        records = provider._dynamic_records_for_DNAME([], {})
+        self.assertEqual([], records)
+
+        # Basic
+        values = [{
+            'value': 'target-1.unit.tests.',
+        }, {
+            'value': 'target-2.unit.tests.',
+            'weight': 42,
+        }]
+        records = provider._dynamic_records_for_DNAME(values, {})
+        self.assertEqual(2, len(records))
+        record = records[0]
+        self.assertEqual('target-1.unit.tests.', record.dname)
+        self.assertEqual(1, record.weight)
+        record = records[1]
+        self.assertEqual('target-2.unit.tests.', record.dname)
+        self.assertEqual(42, record.weight)
+
+        # With extras
+        records = provider._dynamic_records_for_DNAME(values, {
+            'automation': 'manual',
+            'eligible': True,
+        })
+        self.assertEqual(2, len(records))
+        record = records[0]
+        self.assertEqual('target-1.unit.tests.', record.dname)
+        self.assertEqual(1, record.weight)
+        self.assertEqual('manual', record._automation)
+        self.assertTrue(record.eligible)
+
     def test_dynamic_value_sort_key(self):
         values = [{
             'value': '1.2.3.1',
@@ -2281,6 +2349,46 @@ class TestDynProviderDynamic(TestCase):
         'ttl': 60,
         'value': 'target.unit.tests.',
     })
+    dynamic_dname_record = Record.new(zone, 'www', {
+        'dynamic': {
+            'pools': {
+                'one': {
+                    'values': [{
+                        'value': 'target-0.unit.tests.',
+                    }],
+                },
+                'two': {
+                    # Testing out of order value sorting here
+                    'values': [{
+                        'value': 'target-1.unit.tests.',
+                    }, {
+                        'value': 'target-2.unit.tests.',
+                    }],
+                },
+                'three': {
+                    'values': [{
+                        'weight': 10,
+                        'value': 'target-3.unit.tests.',
+                    }, {
+                        'weight': 12,
+                        'value': 'target-4.unit.tests.',
+                    }],
+                },
+            },
+            'rules': [{
+                'geos': ['AF', 'EU', 'AS-JP'],
+                'pool': 'three',
+            }, {
+                'geos': ['NA-US-CA'],
+                'pool': 'two',
+            }, {
+                'pool': 'one',
+            }],
+        },
+        'type': 'DNAME',
+        'ttl': 60,
+        'value': 'target.unit.tests.',
+    })
 
     dynamic_fallback_loop = Record.new(zone, '', {
         'dynamic': {
@@ -2352,6 +2460,51 @@ class TestDynProviderDynamic(TestCase):
         ]
 
         change = Create(self.dynamic_cname_record)
+        provider._mod_dynamic_rulesets(td_mock, change)
+        add_response_pool_mock.assert_has_calls((
+            # default
+            call('default'),
+            # first dynamic and it's fallback
+            call('one'),
+            call('default', index=999),
+            # 2nd dynamic and it's fallback
+            call('three'),
+            call('default', index=999),
+            # 3nd dynamic and it's fallback
+            call('two'),
+            call('default', index=999),
+        ))
+        ruleset_create_mock.assert_has_calls((
+            call(td_mock, index=0),
+            call(td_mock, index=0),
+            call(td_mock, index=0),
+            call(td_mock, index=0),
+        ))
+
+    @patch('dyn.tm.services.DSFRuleset.add_response_pool')
+    @patch('dyn.tm.services.DSFRuleset.create')
+    # just lets us ignore the pool.create calls
+    @patch('dyn.tm.services.DSFResponsePool.create')
+    def test_mod_dynamic_rulesets_create_DNAME(self, _, ruleset_create_mock,
+                                               add_response_pool_mock):
+        provider = DynProvider('test', 'cust', 'user', 'pass',
+                               traffic_directors_enabled=True)
+
+        td_mock = MagicMock()
+        td_mock._rulesets = []
+        provider._traffic_director_monitor = MagicMock()
+        provider._find_or_create_dynamic_pool = MagicMock()
+
+        td_mock.all_response_pools = []
+
+        provider._find_or_create_dynamic_pool.side_effect = [
+            _DummyPool('default'),
+            _DummyPool('one'),
+            _DummyPool('two'),
+            _DummyPool('three'),
+        ]
+
+        change = Create(self.dynamic_dname_record)
         provider._mod_dynamic_rulesets(td_mock, change)
         add_response_pool_mock.assert_has_calls((
             # default
